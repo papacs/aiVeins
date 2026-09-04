@@ -1,0 +1,31 @@
+name: 新词条或词条改进
+description: 建议新增、澄清或更新一个 AI 工程概念
+title: '[词条] '
+labels: [content]
+body:
+  - type: input
+    id: term
+    attributes:
+      label: 概念名称
+      placeholder: 例如 Agent Harness
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: 它解决什么真实困惑？
+      description: 读者会在什么场景遇到它，最容易和什么混淆？
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: 一手来源
+      description: 请提供论文、规范或官方文档链接。
+    validations:
+      required: true
+  - type: dropdown
+    id: contribution
+    attributes:
+      label: 你愿意提交 PR 吗？
+      options: [愿意, 需要协助, 暂时不能]

@@ -1,0 +1,23 @@
+name: 网站问题
+description: 报告页面、搜索、链接、可访问性或构建问题
+title: '[Bug] '
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 请说明你看到什么，以及原本预期什么。
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: 浏览器与设备
+      placeholder: Chrome 版本 / Windows / 手机型号
