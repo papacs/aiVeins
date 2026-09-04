@@ -8,7 +8,7 @@
 
 AI 脉络不只解释“RAG 是什么”，还会回答：它解决什么、不解决什么、什么时候值得用、什么时候应该先别用，以及它最容易和哪些概念混淆。内容通过结构化 Markdown 管理，同时服务网页阅读、搜索、对比和机器读取。
 
-- **在线站点：** [ai-veins-cn.foamy-tang-4423.chatgpt.site](https://ai-veins-cn.foamy-tang-4423.chatgpt.site)
+- **在线站点：** [ai-veins-cn.kakaluya.chatgpt.site](https://ai-veins-cn.kakaluya.chatgpt.site)
 - **源码仓库：** [github.com/papacs/aiVeins](https://github.com/papacs/aiVeins)
 
 > 当前版本：`0.1.0`。项目处于早期可用阶段，内容结构与核心浏览体验已经稳定，词条仍在持续扩充。
