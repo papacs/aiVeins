@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://ai-veins-cn.foamy-tang-4423.chatgpt.site'),
+  metadataBase: new URL('https://aiveins.heyluckyme.com'),
   title: {
     default: 'AI 脉络｜中文 AI 工程决策手册',
     template: '%s｜AI 脉络',

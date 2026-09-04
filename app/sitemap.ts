@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { terms } from '@/lib/content';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://ai-veins-cn.foamy-tang-4423.chatgpt.site';
+  const base = 'https://aiveins.heyluckyme.com';
   const pages = [
     '',
     '/glossary',

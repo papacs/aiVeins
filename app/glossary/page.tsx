@@ -8,12 +8,7 @@ export const metadata: Metadata = {
   description: '搜索并理解 AI 工程中的核心概念、边界与选择依据。',
 };
 
-export default async function GlossaryPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q = '' } = await searchParams;
+export default function GlossaryPage() {
   const searchable = terms.map(
     ({
       body: _body,
@@ -40,7 +35,7 @@ export default async function GlossaryPage({
           每个词条都标明边界、适用条件、常见失败方式和可信来源，不用在十篇文章之间拼答案。
         </p>
       </section>
-      <GlossaryExplorer terms={searchable} initialQuery={q.slice(0, 80)} />
+      <GlossaryExplorer terms={searchable} />
       <SiteFooter />
     </main>
   );

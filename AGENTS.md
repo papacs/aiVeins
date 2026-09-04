@@ -23,6 +23,7 @@ AI 脉络是一份面向中文 AI 学习者和应用开发者的工程决策手�
 | `app/`                         | 页面、路由、SEO 元数据和机器可读接口          |
 | `components/`                  | 站点组件；`components/ui/` 主要是基础 UI 原语 |
 | `scripts/validate-content.mjs` | 独立内容校验器，供本地与 CI 使用              |
+| `scripts/build-pages.mjs`      | 生成 Cloudflare Pages 静态产物及机器可读出口  |
 | `tests/`                       | 内容契约与关键行为测试                        |
 | `docs/TERM_TEMPLATE.md`        | 新词条模板                                    |
 | `.github/`                     | CI、Issue/PR 模板与依赖更新配置               |
@@ -52,6 +53,15 @@ npm run dev
 7. 完成前检查差异，确认没有密钥、构建产物或无关文件。
 
 不要手工编辑构建输出。`components/ui/` 中的基础组件应尽量保持通用，业务逻辑放在站点组件或页面中。
+
+## 部署约定
+
+- 生产站点使用 Cloudflare Pages，规范地址是 `https://aiveins.heyluckyme.com`。
+- `npm run build` 用于常规 Workers 兼容构建；`npm run build:pages` 用于 Pages 静态导出。
+- `npm run deploy:pages` 会重新校验、构建并发布到 Cloudflare Pages 项目 `ai-veins`。
+- `dist/` 是生成目录，不要手工修改或提交。
+- `/glossary.json`、`/llms.txt`、`/robots.txt` 与 `/sitemap.xml` 由 Pages 构建脚本生成；修改内容模型或站点地址时应同步检查这些出口。
+- 自定义域名是 README、SEO、sitemap 和机器可读链接的唯一规范地址；不要把临时部署 URL 写入产品文档。
 
 ## 内容规范
 
@@ -89,7 +99,7 @@ npm run dev
 | -------------------- | ----------------------------------------------- |
 | 词条或内容 Schema    | `npm run content:validate`、`npm run test`      |
 | 页面、组件或样式     | `npm run lint`、`npm run test`、`npm run build` |
-| 配置、依赖或构建链路 | `npm run check`                                 |
+| 配置、依赖或构建链路 | `npm run check`、`npm run build:pages`          |
 | 仅文档               | 检查链接、命令、文件名与实际仓库一致            |
 
 准备提交或声称完成前，应运行：

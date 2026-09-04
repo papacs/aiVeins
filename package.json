@@ -4,7 +4,7 @@
   "private": true,
   "description": "中文 AI 工程决策与反黑话手册",
   "license": "MIT",
-  "homepage": "https://ai-veins-cn.kakaluya.chatgpt.site",
+  "homepage": "https://aiveins.heyluckyme.com",
   "repository": {
     "type": "git",
     "url": "https://github.com/papacs/aiVeins.git"
@@ -15,6 +15,8 @@
   "scripts": {
     "dev": "vinext dev",
     "build": "npm run content:validate && vinext build",
+    "build:pages": "npm run content:validate && node scripts/build-pages.mjs",
+    "deploy:pages": "npm run build:pages && wrangler pages deploy dist/client --project-name ai-veins --branch main",
     "start": "wrangler dev --config dist/server/wrangler.json",
     "lint": "oxlint app lib scripts tests components/site-header.tsx components/glossary-explorer.tsx components/term-markdown.tsx",
     "format": "oxfmt",

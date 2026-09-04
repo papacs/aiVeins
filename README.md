@@ -3,12 +3,13 @@
 [![CI](https://github.com/papacs/aiVeins/actions/workflows/ci.yml/badge.svg)](https://github.com/papacs/aiVeins/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-2563eb.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/Node.js-%E2%89%A522.13-16a34a.svg)](package.json)
+[![Cloudflare Pages](https://img.shields.io/badge/Cloudflare%20Pages-deployed-F38020?logo=cloudflare&logoColor=white)](https://aiveins.heyluckyme.com)
 
 给中文 AI 学习者和应用开发者的工程决策与反黑话手册。
 
 AI 脉络不只解释“RAG 是什么”，还会回答：它解决什么、不解决什么、什么时候值得用、什么时候应该先别用，以及它最容易和哪些概念混淆。内容通过结构化 Markdown 管理，同时服务网页阅读、搜索、对比和机器读取。
 
-- **在线站点：** [ai-veins-cn.kakaluya.chatgpt.site](https://ai-veins-cn.kakaluya.chatgpt.site)
+- **在线站点：** [aiveins.heyluckyme.com](https://aiveins.heyluckyme.com)
 - **源码仓库：** [github.com/papacs/aiVeins](https://github.com/papacs/aiVeins)
 
 > 当前版本：`0.1.0`。项目处于早期可用阶段，内容结构与核心浏览体验已经稳定，词条仍在持续扩充。
@@ -68,7 +69,24 @@ npm run check
 | `npm run lint`             | 检查应用与脚本代码                 |
 | `npm run format:check`     | 检查格式但不改写文件               |
 | `npm run build`            | 校验内容并生成生产构建             |
+| `npm run build:pages`      | 生成 Cloudflare Pages 静态产物     |
+| `npm run deploy:pages`     | 构建并发布到 `ai-veins` Pages 项目 |
 | `npm run check`            | 依次运行内容校验、Lint、测试和构建 |
+
+## 在线部署
+
+生产站点托管在 Cloudflare Pages，自定义域名为
+[aiveins.heyluckyme.com](https://aiveins.heyluckyme.com)。
+`npm run build:pages` 会启用静态导出，并把页面以及 `/glossary.json`、`/llms.txt`、
+`/robots.txt`、`/sitemap.xml` 一并生成到 `dist/client/`。已登录 Cloudflare Wrangler
+的维护者可以执行：
+
+```bash
+npm run deploy:pages
+```
+
+该命令会先重新校验内容和构建产物，再发布到 `ai-veins` Pages 项目。自定义域名是
+文档、SEO 和机器可读出口的唯一规范地址；`ai-veins.pages.dev` 仅作为平台回源地址。
 
 ## 信息架构
 
@@ -91,7 +109,7 @@ lib/content.ts ── Schema 校验、关系解析、排序与导出
 | `app/`                  | Vinext 页面、路由与数据出口           |
 | `components/`           | 可复用界面与交互组件                  |
 | `lib/content.ts`        | 内容 Schema、读取与派生逻辑           |
-| `scripts/`              | 可在 CI 独立运行的内容校验脚本        |
+| `scripts/`              | 内容校验和 Cloudflare Pages 构建脚本  |
 | `tests/`                | 内容契约和关键行为测试                |
 | `docs/TERM_TEMPLATE.md` | 新词条模板与字段示例                  |
 
@@ -155,7 +173,7 @@ related:
 - Tailwind CSS、shadcn/ui
 - Zod、YAML、React Markdown
 - Node.js Test Runner、Oxlint、Oxfmt
-- Cloudflare Workers 构建目标
+- Cloudflare Pages 静态部署（同时保留 Workers 兼容构建）
 
 ## 许可证
 

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import {
   ArrowRight,
@@ -7,6 +8,19 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    url: '/',
+    siteName: 'AI 脉络',
+    title: 'AI 脉络｜中文 AI 工程决策手册',
+    description:
+      '看懂 AI 工程概念的来龙去脉：它解决什么、何时该用，以及容易和什么混淆。',
+  },
+};
 
 const starters = [
   {

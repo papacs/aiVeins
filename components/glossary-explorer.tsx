@@ -55,6 +55,17 @@ export function GlossaryExplorer({
   const [search, setSearch] = useState(initialQuery);
 
   useEffect(() => {
+    const query = new URLSearchParams(window.location.search)
+      .get('q')
+      ?.trim()
+      .slice(0, 80);
+    if (!query) return;
+
+    const timeout = window.setTimeout(() => setSearch(query), 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
     const lifecycle = new AbortController();
