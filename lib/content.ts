@@ -2,6 +2,7 @@
 
 import { parse as parseYaml } from 'yaml';
 import { termMetaSchema } from './term-schema';
+import { validateReading } from './reading';
 import type { TermMeta } from './term-schema';
 export type { TermMeta } from './term-schema';
 
@@ -34,7 +35,11 @@ function parseTerms(): Term[] {
       throw new Error(`词条格式不正确：${file}\n${result.error.message}`);
     }
 
-    return { ...result.data, body: parsed.content.trim() };
+    const term = { ...result.data, body: parsed.content.trim() };
+    const errors = validateReading(term);
+    if (errors.length)
+      throw new Error(`词条引用不正确：${file}\n${errors.join('\n')}`);
+    return term;
   });
 
   const slugs = new Set<string>();

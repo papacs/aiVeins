@@ -1,10 +1,19 @@
 import { z } from 'zod';
 
 const sourceSchema = z.object({
+  id: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/)
+    .optional(),
   name: z.string().min(1),
   url: z
     .url()
     .refine((value) => value.startsWith('https://'), '来源必须使用 HTTPS'),
+  publisher: z.string().min(1).optional(),
+  kind: z.enum(['原始论文', '官方文档', '一手工程实践', '标准规范']).optional(),
+  accessed: z.iso.date().optional(),
+  supports: z.string().min(12).optional(),
+  limitation: z.string().min(12).optional(),
 });
 
 export const termMetaSchema = z.object({
@@ -31,6 +40,13 @@ export const termMetaSchema = z.object({
   pitfalls: z.array(z.string().min(1)).min(3),
   related: z.array(z.string()).default([]),
   prerequisites: z.array(z.string()).default([]),
+  learning_objectives: z.array(z.string().min(6)).min(1).max(4).optional(),
+  exercise: z
+    .object({
+      question: z.string().min(12),
+      answer: z.string().min(24),
+    })
+    .optional(),
   sources: z.array(sourceSchema).min(1),
 });
 

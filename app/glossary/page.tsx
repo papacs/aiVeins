@@ -21,6 +21,8 @@ export default function GlossaryPage() {
       related: _related,
       prerequisites: _prerequisites,
       analogy: _analogy,
+      learning_objectives: _objectives,
+      exercise: _exercise,
       ...term
     }) => term,
   );
@@ -32,6 +34,10 @@ export default function GlossaryPage() {
         <h1>先找到，再真正弄懂。</h1>
         <p>
           每个词条都标明边界、适用条件、常见失败方式和可信来源，不用在十篇文章之间拼答案。
+        </p>
+        <p>
+          {terms.filter((term) => term.learning_objectives).length}{' '}
+          篇提供案例、自测与逐项来源说明。可搜索“结构化输出”，跟着示例动手验证。
         </p>
       </section>
       <GlossaryExplorer terms={searchable} />

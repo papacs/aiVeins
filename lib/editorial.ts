@@ -73,10 +73,12 @@ export const paths = [
       '画出一个工具调用流程，标出参数校验、人工确认和失败后的退出位置。',
     audience: '应用开发者',
     title: '把模型安全接进产品',
-    time: '约 40 分钟',
-    summary: '从固定工作流起步，再逐步加入工具、开放协议、自主决策和安全控制。',
+    time: '约 45 分钟',
+    summary:
+      '从固定工作流起步，先让输出可校验，再加入工具、开放协议、自主决策和安全控制。',
     terms: [
       ['Workflow', 'workflow'],
+      ['结构化输出', 'structured-output'],
       ['Tool Calling', 'tool-calling'],
       ['MCP', 'mcp'],
       ['Agent', 'agent'],

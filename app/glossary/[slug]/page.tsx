@@ -16,6 +16,7 @@ import {
 import { SiteFooter, SiteHeader } from '@/components/site-header';
 import { TermMarkdown } from '@/components/term-markdown';
 import { getTerm, terms } from '@/lib/content';
+import { getReadingSections, sourceAnchor } from '@/lib/reading';
 
 export function generateStaticParams() {
   return terms.map((term) => ({ slug: term.slug }));
@@ -67,6 +68,7 @@ export default async function TermPage({
   if (!term) notFound();
   const related = term.related.map(getTerm).filter(Boolean);
   const prerequisites = term.prerequisites.map(getTerm).filter(Boolean);
+  const sections = getReadingSections(term.body);
 
   return (
     <main className="site-shell">
@@ -82,6 +84,16 @@ export default async function TermPage({
               <a href="#quick">30 秒看懂</a>
               <a href="#decision">怎么选择</a>
               <a href="#detail">深入理解</a>
+              {sections.map((section) => (
+                <a
+                  className="toc-subsection"
+                  key={section.id}
+                  href={`#${section.id}`}
+                >
+                  {section.title}
+                </a>
+              ))}
+              {term.exercise && <a href="#exercise">检验理解</a>}
               <a href="#sources">来源</a>
             </nav>
           </details>
@@ -121,6 +133,26 @@ export default async function TermPage({
               <strong>{term.analogy}</strong>
             </div>
           </section>
+
+          {term.learning_objectives && (
+            <section
+              className="learning-brief"
+              aria-labelledby="learning-title"
+            >
+              <p className="section-kicker">这篇能帮你解决什么</p>
+              <h2 id="learning-title">带着目标读，读完可以验证</h2>
+              <ul>
+                {term.learning_objectives.map((goal) => (
+                  <li key={goal}>{goal}</li>
+                ))}
+              </ul>
+              <div>
+                <a href="#detail">开始深读 →</a>
+                <a href="#exercise">先做一道自测 →</a>
+                <a href="#sources">查看 {term.sources.length} 份来源 →</a>
+              </div>
+            </section>
+          )}
 
           {prerequisites.length > 0 && (
             <div className="prerequisite-line">
@@ -163,6 +195,18 @@ export default async function TermPage({
             <TermMarkdown>{term.body}</TermMarkdown>
           </section>
 
+          {term.exercise && (
+            <section id="exercise" className="reading-exercise">
+              <p className="section-kicker">检验理解 · 教学情境</p>
+              <h2>你会怎么判断？</h2>
+              <p>{term.exercise.question}</p>
+              <details>
+                <summary>想好后，展开参考答案</summary>
+                <p>{term.exercise.answer}</p>
+              </details>
+            </section>
+          )}
+
           <section className="related-section">
             <p className="section-kicker">继续建立关联</p>
             <h2>相关概念</h2>
@@ -185,17 +229,44 @@ export default async function TermPage({
           </Suspense>
           <section id="sources" className="source-section">
             <p className="section-kicker">可信来源</p>
-            <h2>进一步阅读</h2>
-            {term.sources.map((source) => (
-              <a
-                href={source.url}
-                target="_blank"
-                rel="noreferrer"
+            <h2>依据在哪里，能说明什么</h2>
+            <p className="source-intro">
+              正文中的编号链接对应下列资料。教学案例与操作建议由本站整理，不是原作者的实验结果或普遍保证。
+            </p>
+            {term.sources.map((source, index) => (
+              <article
+                className="source-card"
+                id={sourceAnchor(source, index)}
                 key={source.url}
               >
-                <span>{source.name}</span>
-                <ExternalLink size={15} />
-              </a>
+                <div className="source-card-meta">
+                  <span>来源 {index + 1}</span>
+                  {source.kind && <span>{source.kind}</span>}
+                  {source.publisher && <span>{source.publisher}</span>}
+                </div>
+                <h3>
+                  <a href={source.url} target="_blank" rel="noreferrer">
+                    {source.name}
+                    <ExternalLink size={15} />
+                  </a>
+                </h3>
+                {source.supports && (
+                  <p>
+                    <b>支持的结论：</b>
+                    {source.supports}
+                  </p>
+                )}
+                {source.limitation && (
+                  <p>
+                    <b>适用边界：</b>
+                    {source.limitation}
+                  </p>
+                )}
+                {source.accessed && <small>资料核验于 {source.accessed}</small>}
+                <a className="source-return" href="#detail">
+                  返回正文 ↑
+                </a>
+              </article>
             ))}
           </section>
         </div>

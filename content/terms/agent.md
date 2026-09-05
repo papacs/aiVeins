@@ -6,7 +6,7 @@ category: Agent 工程
 level: 入门
 status: verified
 trend: 当前热门
-last_verified: '2026-09-04'
+last_verified: '2026-09-05'
 summary: 能自己决定下一步行动、选择工具，并根据结果继续调整，直到完成目标或请求人类介入的 AI 系统。
 analogy: 像一位拿到目标和工具箱的同事：你说明结果，它自己决定先查资料、再操作，还是回来问你。
 solves:
@@ -22,21 +22,69 @@ pitfalls:
   ]
 related: [workflow, tool-calling, context-engineering, evaluation, guardrail]
 prerequisites: [llm]
+learning_objectives:
+  - 通过控制权和反馈循环判断一个系统是否需要 Agent
+  - 为自主任务写出完成条件、预算和必须交还控制权的情况
+exercise:
+  question: 系统按固定顺序执行“提取工单 → 查询订单 → 生成回复”，其中查询函数由模型填写参数。仅凭这个工具调用就能说它是自主 Agent 吗？
+  answer: 不能。在本文采用的区分方式下，关键是下一步控制权。如果步骤和分支由程序预先规定，它仍更接近 Workflow。只有模型根据结果持续决定要查什么、是否换策略或何时退出，才更符合这里讨论的 Agent 循环。
 sources:
-  - name: Anthropic · Building effective agents
+  - id: effective-agents
+    name: Building effective agents（2024）
     url: https://www.anthropic.com/engineering/building-effective-agents
-  - name: Anthropic · Trustworthy agents in practice
-    url: https://www.anthropic.com/research/trustworthy-agents
+    publisher: Anthropic
+    kind: 一手工程实践
+    accessed: '2026-09-05'
+    supports: 以控制流程的方式区分 Workflow 与 Agent，并讨论自主系统的成本、延迟和停止条件。
+    limitation: 这是文章采用的工程分类，业界对 Agent 的命名并不统一；文中早期工具示例不代表当前选型推荐。
+  - id: react-paper
+    name: ReAct — Synergizing Reasoning and Acting in Language Models（2022）
+    url: https://arxiv.org/abs/2210.03629
+    publisher: Yao 等
+    kind: 原始论文
+    accessed: '2026-09-05'
+    supports: 研究交替组织推理与行动，让模型通过与环境交互获得信息并调整任务过程。
+    limitation: 论文任务与评测环境有明确范围，不能据此断言所有 Agent 都应使用同一提示模板或具有相同成功率。
 ---
 
-## 工作方式
+## 先问谁决定下一步
 
-典型 Agent 运行在“观察 → 判断 → 行动 → 再观察”的循环里。模型不是只生成一次答案，而是会读取工具结果、检查进展并决定下一步。
+本文采用一个便于工程判断的区分：代码规定主要控制路径的是 Workflow；模型根据中间结果持续选择行动的是 Agent。这个区分来自 Anthropic 的工程文章，但并不是业界统一的命名标准。[1](#source-effective-agents)
 
-## 最小判断
+因此，不要先数用了几个模型、多少工具、有没有聊天界面。先看一次运行中“接下来做什么”由谁决定。
 
-如果你能在编码前画出稳定完整的流程图，优先做 Workflow；只有关键步骤确实需要模型临场选择时，再引入 Agent。
+## 一次有反馈的任务循环
 
-## 失败从哪里来
+**教学情境：排查测试失败。** 系统先读取失败信息，决定查看哪个文件，提出修改，再运行测试。新失败可能改变下一步行动；测试通过后还需要检查是否满足原始需求。
 
-Agent 会把模型的不确定性放大到真实操作中。可靠性依赖权限边界、可观测性、预算、重试、审批和回滚，不只依赖模型能力。
+可以把过程记成“观察 → 选择动作 → 应用执行 → 检查结果 → 继续或退出”。ReAct 论文研究了推理与行动交替组织的方式，说明从环境获得反馈的重要性。[2](#source-react-paper) 这不要求产品展示模型的内部推理；用户需要的是可核查的操作记录、结果和依据。
+
+## 给自主决策划定范围
+
+本站建议先写一份任务契约，再接入循环：
+
+```text
+教学示意：修复一个测试失败
+目标：目标测试通过，相关检查没有回归
+可用动作：读取工作区文件、提出修改、执行允许的测试
+预算：由应用配置最大步骤数、耗时和调用费用
+停止：通过验收 / 预算耗尽 / 重复失败 / 需要额外权限
+交付：修改摘要、测试结果和仍未验证的部分
+```
+
+“任务完成”不应只取决于模型说完成了。对能用程序验证的结果，让程序验证；对必须由人判断的要求，明确交回检查。
+
+## 怎样判断是否值得引入
+
+先尝试 [Workflow](/glossary/workflow) 或更简单的方案，再用相同任务比较。需要记录的不是只有成功率，还包括执行次数、耗时、人工介入和失败后的恢复成本。自主性带来的灵活性可能伴随更高成本与延迟。[1](#source-effective-agents)
+
+如果每次路径都相同，模型的持续规划可能没有带来足够收益。如果任务会因工具结果改变方向，并且结果可检查、权限可控制，才值得进一步测试。
+
+## 长任务失败时看什么
+
+- **反复做同一件事：** 是否保存了已尝试动作和失败原因？有没有重复失败的停止条件？
+- **目标逐渐偏离：** 查看当前上下文是否仍保留原始目标与限制，继续读 [上下文工程](/glossary/context-engineering)。
+- **请求了不该做的动作：** 应用是否真正限制工具和权限，还是只靠提示中的承诺？
+- **报告成功但结果不对：** 评测是否检查了最终环境状态，而只检查了回复文案？
+
+这些是排查方向，不是自动安全保证。增加一个“自我反思”步骤，也不能替代外部验证。

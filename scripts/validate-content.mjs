@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
 import { termMetaSchema } from '../lib/term-schema.ts';
+import { validateReading } from '../lib/reading.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const termDirectory = path.join(root, 'content', 'terms');
@@ -46,6 +47,8 @@ export function loadAndValidateContent() {
         errors.push(file + ': 文件名必须与 slug 一致');
       if (!content.includes('## '))
         errors.push(file + ': 正文至少需要一个二级标题');
+      for (const error of validateReading({ ...data, body: content }))
+        errors.push(file + ': ' + error);
       return { file, ...data, body: content.trim() };
     })
     .filter(Boolean);
