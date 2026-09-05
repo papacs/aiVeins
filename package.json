@@ -21,8 +21,8 @@
     "lint": "oxlint app lib scripts tests components/site-header.tsx components/glossary-explorer.tsx components/term-markdown.tsx components/path-navigation.tsx components/site-navigation.tsx components/site-link.tsx",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
-    "content:validate": "node scripts/validate-content.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "content:validate": "node --experimental-strip-types scripts/validate-content.mjs",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "check": "npm run content:validate && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
