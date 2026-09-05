@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { SiteLink as Link } from '@/components/site-link';
 import { ArrowRight, BookOpen, Braces, Database, Route } from 'lucide-react';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
 
@@ -8,55 +8,9 @@ export const metadata: Metadata = {
   description: '按目标而不是按字母顺序，建立 AI 工程知识脉络。',
 };
 
-const paths = [
-  {
-    icon: BookOpen,
-    audience: '零基础',
-    title: '从模型到能做事的 Agent',
-    time: '约 45 分钟',
-    summary:
-      '先建立模型、上下文与工具的基本直觉，再理解 Agent 为什么需要工作流、评测和护栏。',
-    terms: [
-      ['LLM', 'llm'],
-      ['提示工程', 'prompt-engineering'],
-      ['上下文工程', 'context-engineering'],
-      ['工具调用', 'tool-calling'],
-      ['Agent', 'agent'],
-      ['评测', 'evaluation'],
-    ],
-  },
-  {
-    icon: Database,
-    audience: '知识库实践者',
-    title: '做一个靠谱的 RAG 系统',
-    time: '约 35 分钟',
-    summary:
-      '从内容如何表示开始，分清检索、知识库、长上下文和微调各自负责什么。',
-    terms: [
-      ['Embedding', 'embedding'],
-      ['向量检索', 'vector-search'],
-      ['知识库', 'knowledge-base'],
-      ['RAG', 'rag'],
-      ['长上下文', 'long-context'],
-      ['微调', 'fine-tuning'],
-    ],
-  },
-  {
-    icon: Braces,
-    audience: '应用开发者',
-    title: '把模型安全接进产品',
-    time: '约 40 分钟',
-    summary: '从固定工作流起步，再逐步加入工具、开放协议、自主决策和安全控制。',
-    terms: [
-      ['Workflow', 'workflow'],
-      ['Tool Calling', 'tool-calling'],
-      ['MCP', 'mcp'],
-      ['Agent', 'agent'],
-      ['Guardrail', 'guardrail'],
-      ['Evaluation', 'evaluation'],
-    ],
-  },
-];
+import { paths } from '@/lib/editorial';
+import { pathTermHref } from '@/lib/experience';
+const pathIcons = [BookOpen, Database, Braces];
 
 export default function PathsPage() {
   return (
@@ -72,19 +26,29 @@ export default function PathsPage() {
       <div className="path-stack">
         {paths.map(
           (
-            { icon: Icon, audience, title, time, summary, terms },
+            { id, audience, title, time, summary, terms, outcome, exercise },
             pathIndex,
           ) => (
-            <article className="path-card" key={title}>
+            <article className="path-card" key={id} id={id}>
               <div className="path-intro">
                 <span className="path-icon">
-                  <Icon size={22} />
+                  {(() => {
+                    const Icon = pathIcons[pathIndex];
+                    return <Icon size={22} />;
+                  })()}
                 </span>
                 <p>
                   {audience} · {time}
                 </p>
                 <h2>{title}</h2>
                 <span>{summary}</span>
+                <p className="path-outcome">学完能做什么：{outcome}</p>
+                <Link
+                  className="text-link"
+                  href={pathTermHref(id, terms[0][1])}
+                >
+                  开始这条路径 <ArrowRight size={16} />
+                </Link>
               </div>
               <ol className="path-steps">
                 {terms.map(([name, slug], index) => (
@@ -92,13 +56,17 @@ export default function PathsPage() {
                     <span>
                       {pathIndex + 1}.{index + 1}
                     </span>
-                    <Link href={`/glossary/${slug}`}>
+                    <Link href={pathTermHref(id, slug)}>
                       {name}
                       <ArrowRight size={15} />
                     </Link>
                   </li>
                 ))}
               </ol>
+              <div className="path-exercise">
+                <b>动手检验</b>
+                <p>{exercise}</p>
+              </div>
             </article>
           ),
         )}

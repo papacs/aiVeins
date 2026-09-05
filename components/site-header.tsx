@@ -1,12 +1,6 @@
-import Link from 'next/link';
+import { SiteLink as Link } from '@/components/site-link';
 import { Menu } from 'lucide-react';
-
-const navigation = [
-  ['术语库', '/glossary'],
-  ['概念对比', '/compare'],
-  ['学习路径', '/paths'],
-  ['AI 雷达', '/radar'],
-];
+import { NavigationLinks } from './site-navigation';
 
 export function Brand() {
   return (
@@ -26,11 +20,7 @@ export function SiteHeader() {
     <header className="topbar">
       <Brand />
       <nav aria-label="主导航">
-        {navigation.map(([label, href]) => (
-          <Link href={href} key={href}>
-            {label}
-          </Link>
-        ))}
+        <NavigationLinks />
       </nav>
       <a
         className="github-link"
@@ -45,11 +35,7 @@ export function SiteHeader() {
           <Menu size={21} />
         </summary>
         <div>
-          {navigation.map(([label, href]) => (
-            <Link href={href} key={href}>
-              {label}
-            </Link>
-          ))}
+          <NavigationLinks />
           <Link href="/contribute">参与共建</Link>
           <a
             href="https://github.com/papacs/aiVeins"

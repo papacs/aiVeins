@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { Suspense } from 'react';
+import { PathNavigation } from '@/components/path-navigation';
+import { statusLabels, statusNotes } from '@/lib/experience';
+import { SiteLink as Link } from '@/components/site-link';
 import { notFound } from 'next/navigation';
 import {
   ArrowLeft,
@@ -26,7 +29,11 @@ export async function generateMetadata({
   const { slug } = await params;
   const term = getTerm(slug);
   if (!term) return {};
-  return { title: term.title, description: term.summary };
+  return {
+    title: term.title,
+    description: term.summary,
+    alternates: { canonical: '/glossary/' + slug },
+  };
 }
 
 function ListCard({
@@ -69,14 +76,20 @@ export default async function TermPage({
           <Link href="/glossary" className="back-link">
             <ArrowLeft size={15} /> 返回术语库
           </Link>
-          <nav aria-label="本页目录">
-            <a href="#quick">30 秒看懂</a>
-            <a href="#decision">怎么选择</a>
-            <a href="#detail">深入理解</a>
-            <a href="#sources">来源</a>
-          </nav>
+          <details className="term-toc" open>
+            <summary>本页目录</summary>
+            <nav aria-label="本页目录">
+              <a href="#quick">30 秒看懂</a>
+              <a href="#decision">怎么选择</a>
+              <a href="#detail">深入理解</a>
+              <a href="#sources">来源</a>
+            </nav>
+          </details>
         </aside>
         <div className="term-main">
+          <Suspense fallback={null}>
+            <PathNavigation slug={slug} />
+          </Suspense>
           <header className="term-hero">
             <div className="term-labels">
               <span>{term.category}</span>
@@ -90,9 +103,16 @@ export default async function TermPage({
             <p className="term-summary">{term.summary}</p>
             <div className="verified-line">
               <CalendarCheck size={16} /> 最后核验 {term.last_verified} ·{' '}
-              {term.status === 'verified' ? '已核验' : '研究中'}
+              <span className={`content-status status-${term.status}`}>
+                {statusLabels[term.status]}
+              </span>
             </div>
           </header>
+          {term.status !== 'verified' && (
+            <p className={`status-notice status-${term.status}`}>
+              {statusNotes[term.status]}
+            </p>
+          )}
 
           <section id="quick" className="analogy-box">
             <Lightbulb size={22} />
@@ -160,6 +180,9 @@ export default async function TermPage({
             </div>
           </section>
 
+          <Suspense fallback={null}>
+            <PathNavigation slug={slug} />
+          </Suspense>
           <section id="sources" className="source-section">
             <p className="section-kicker">可信来源</p>
             <h2>进一步阅读</h2>

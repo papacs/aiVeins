@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
+import { SiteLink as Link } from '@/components/site-link';
 import {
   ArrowRight,
   BookOpen,
@@ -8,6 +8,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { SiteFooter, SiteHeader } from '@/components/site-header';
+import { paths, comparisons, scenarios, radarItems } from '@/lib/editorial';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -25,32 +26,34 @@ export const metadata: Metadata = {
 const starters = [
   {
     eyebrow: '完全不懂 AI',
-    title: '从 LLM 到 Agent',
-    detail: '6 个概念 · 约 45 分钟',
+    title: paths[0].title,
+    href: '/paths#' + paths[0].id,
+    detail: paths[0].terms.length + ' 个概念 · ' + paths[0].time,
     icon: BookOpen,
     accent: 'blue',
   },
   {
     eyebrow: '正在做应用',
-    title: '把模型接进产品',
-    detail: '结构化输出、工具调用与评测',
+    title: paths[2].title,
+    href: '/paths#' + paths[2].id,
+    detail: '工具调用、权限控制与评测',
     icon: Braces,
     accent: 'mint',
   },
   {
     eyebrow: '总被术语绕晕',
     title: '先看高频概念对比',
-    detail: '6 组最容易选错的技术',
+    href: '/compare',
+    detail: comparisons.length + ' 组概念的关系与选择条件',
     icon: GitCompareArrows,
     accent: 'orange',
   },
 ];
 
-const comparisons = [
-  ['Agent', 'Workflow', '自主决策，还是预先编排？'],
-  ['RAG', '长上下文', '检索资料，还是一次全部装入？'],
-  ['MCP', '工具调用', '开放协议，还是模型能力？'],
-];
+const featuredComparisons = comparisons.filter((item) =>
+  ['agent-workflow', 'rag-long-context', 'mcp-tool-calling'].includes(item.id),
+);
+const featuredRadar = radarItems[0];
 
 export default function Home() {
   return (
@@ -83,11 +86,15 @@ export default function Home() {
               name="q"
               placeholder="搜索 RAG、Agent、MCP……"
               autoComplete="off"
+              maxLength={80}
+              type="search"
             />
-            <kbd>⌘ K</kbd>
+            <button type="submit" className="search-submit">
+              搜索
+            </button>
           </div>
-          <div className="quick-links" aria-label="热门搜索">
-            <span>大家正在看</span>
+          <div className="quick-links" aria-label="推荐词条">
+            <span>推荐先看</span>
             <Link href="/glossary/agent">Agent</Link>
             <Link href="/glossary/rag">RAG</Link>
             <Link href="/glossary/context-engineering">上下文工程</Link>
@@ -106,24 +113,50 @@ export default function Home() {
           </Link>
         </div>
         <div className="starter-grid">
-          {starters.map(({ eyebrow, title, detail, icon: Icon, accent }) => (
+          {starters.map(
+            ({ eyebrow, title, detail, href, icon: Icon, accent }) => (
+              <Link
+                href={href}
+                className={`starter-card ${accent}`}
+                key={title}
+              >
+                <span className="card-icon">
+                  <Icon size={21} />
+                </span>
+                <p>{eyebrow}</p>
+                <h3>{title}</h3>
+                <span>{detail}</span>
+                <ArrowRight className="card-arrow" size={19} />
+              </Link>
+            ),
+          )}
+        </div>
+      </section>
+
+      <section
+        className="section-block scenario-section"
+        aria-labelledby="scenario-title"
+      >
+        <div className="section-heading">
+          <div>
+            <p className="section-kicker">带着问题来</p>
+            <h2 id="scenario-title">先定位问题，再选择技术</h2>
+          </div>
+        </div>
+        <div className="scenario-grid">
+          {scenarios.map((item) => (
             <Link
-              href="/paths"
-              className={`starter-card ${accent}`}
-              key={title}
+              className="scenario-card"
+              key={item.id}
+              href={`/glossary?q=${encodeURIComponent(item.question)}`}
             >
-              <span className="card-icon">
-                <Icon size={21} />
-              </span>
-              <p>{eyebrow}</p>
-              <h3>{title}</h3>
-              <span>{detail}</span>
-              <ArrowRight className="card-arrow" size={19} />
+              <h3>{item.question}</h3>
+              <p>{item.hint}</p>
+              <span>查看相关概念与判断方法 →</span>
             </Link>
           ))}
         </div>
       </section>
-
       <section className="split-section">
         <div className="comparison-board">
           <div className="section-heading compact">
@@ -133,14 +166,14 @@ export default function Home() {
             </div>
           </div>
           <div className="comparison-list">
-            {comparisons.map(([left, right, note]) => (
-              <Link href="/compare" key={left} className="comparison-row">
+            {featuredComparisons.map(({ id, left, right, question }) => (
+              <Link href={`/compare#${id}`} key={id} className="comparison-row">
                 <span className="concept-pair">
                   <b>{left}</b>
-                  <em>vs</em>
+                  <em>与</em>
                   <b>{right}</b>
                 </span>
-                <span className="comparison-note">{note}</span>
+                <span className="comparison-note">{question}</span>
                 <ArrowRight size={17} />
               </Link>
             ))}
@@ -149,16 +182,16 @@ export default function Home() {
 
         <aside className="radar-card" aria-labelledby="radar-title">
           <p className="section-kicker">本期 AI 雷达 · 2026.09</p>
-          <h2 id="radar-title">Agent Harness</h2>
-          <p>它不是又一个 Agent 框架，而是让模型可靠工作的整套运行环境。</p>
+          <h2 id="radar-title">{featuredRadar.title}</h2>
+          <p>{featuredRadar.summary}</p>
           <div className="radar-meta">
             <span className="status-dot" />
             <span>
-              <b>快速演变</b> · 建议理解到工作原理
+              <b>{featuredRadar.status}</b> · 编辑观察
             </span>
           </div>
-          <Link href="/radar">
-            读 5 分钟解读 <ArrowRight size={16} />
+          <Link href={`/radar#${featuredRadar.id}`}>
+            查看观察与延伸阅读 <ArrowRight size={16} />
           </Link>
         </aside>
       </section>

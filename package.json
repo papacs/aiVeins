@@ -18,7 +18,7 @@
     "build:pages": "npm run content:validate && node scripts/build-pages.mjs",
     "deploy:pages": "npm run build:pages && wrangler pages deploy dist/client --project-name ai-veins --branch main",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "lint": "oxlint app lib scripts tests components/site-header.tsx components/glossary-explorer.tsx components/term-markdown.tsx",
+    "lint": "oxlint app lib scripts tests components/site-header.tsx components/glossary-explorer.tsx components/term-markdown.tsx components/path-navigation.tsx components/site-navigation.tsx components/site-link.tsx",
     "format": "oxfmt",
     "format:check": "oxfmt --check",
     "content:validate": "node scripts/validate-content.mjs",

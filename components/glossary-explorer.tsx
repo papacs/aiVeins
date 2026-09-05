@@ -1,15 +1,9 @@
 'use client';
 
-import Link from 'next/link';
+import { SiteLink as Link } from '@/components/site-link';
 import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, CircleCheck, Search } from 'lucide-react';
-import {
-  Command,
-  CommandEmpty,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { ArrowRight, Search } from 'lucide-react';
+import { filterTerms, matchingScenarios, statusLabels } from '@/lib/experience';
 
 declare global {
   interface Document {
@@ -38,45 +32,51 @@ type SearchTerm = {
   trend: string;
   summary: string;
   last_verified: string;
+  status: keyof typeof statusLabels;
 };
 
-export function GlossaryExplorer({
-  terms,
-  initialQuery = '',
-}: {
-  terms: SearchTerm[];
-  initialQuery?: string;
-}) {
+export function GlossaryExplorer({ terms }: { terms: SearchTerm[] }) {
   const categories = useMemo(
     () => ['全部', ...new Set(terms.map((term) => term.category))],
     [terms],
   );
   const [category, setCategory] = useState('全部');
-  const [search, setSearch] = useState(initialQuery);
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    const query = new URLSearchParams(window.location.search)
-      .get('q')
-      ?.trim()
-      .slice(0, 80);
-    if (!query) return;
+    const restore = () => {
+      const params = new URLSearchParams(window.location.search);
+      setSearch((params.get('q') ?? '').slice(0, 80));
+      const value = params.get('category') ?? '全部';
+      setCategory(categories.includes(value) ? value : '全部');
+    };
+    restore();
+    window.addEventListener('popstate', restore);
+    return () => window.removeEventListener('popstate', restore);
+  }, [categories]);
 
-    const timeout = window.setTimeout(() => setSearch(query), 0);
-    return () => window.clearTimeout(timeout);
-  }, []);
+  function update(query: string, nextCategory: string) {
+    setSearch(query);
+    setCategory(nextCategory);
+    const url = new URL(window.location.href);
+    if (query) url.searchParams.set('q', query);
+    else url.searchParams.delete('q');
+    if (nextCategory !== '全部') url.searchParams.set('category', nextCategory);
+    else url.searchParams.delete('category');
+    window.history.replaceState(window.history.state, '', url);
+  }
 
   useEffect(() => {
     const context = document.modelContext;
     if (!context?.registerTool) return;
     const lifecycle = new AbortController();
-
     void Promise.resolve(
       context.registerTool(
         {
           name: 'search_ai_terms',
           title: '搜索 AI 术语',
           description:
-            '在 AI 脉络中按中英文名称、别名、分类或解释搜索词条，并同步更新页面上的搜索结果。',
+            '按名称、别名、解释或已整理的场景问题搜索，并同步页面结果。',
           inputSchema: {
             type: 'object',
             properties: {
@@ -88,46 +88,50 @@ export function GlossaryExplorer({
           annotations: { readOnlyHint: true, untrustedContentHint: false },
           execute(input) {
             const query =
-              typeof input === 'object' && input !== null && 'query' in input
-                ? String((input as { query: unknown }).query).trim()
+              typeof input === 'object' &&
+              input !== null &&
+              'query' in input &&
+              typeof input.query === 'string'
+                ? input.query.trim()
                 : '';
             if (!query || query.length > 80)
               throw new Error('query 必须是 1–80 个字符的字符串');
-            setCategory('全部');
-            setSearch(query);
-            const normalized = query.toLocaleLowerCase('zh-CN');
-            const matches = terms.filter((term) =>
-              `${term.title} ${term.aliases.join(' ')} ${term.category} ${term.summary}`
-                .toLocaleLowerCase('zh-CN')
-                .includes(normalized),
-            );
+            update(query, '全部');
+            const matches = filterTerms(terms, query);
             return {
               query,
               count: matches.length,
               results: matches
                 .slice(0, 8)
-                .map(({ title, slug, summary, category }) => ({
-                  title,
-                  slug,
-                  summary,
-                  category,
-                  url: `/glossary/${slug}`,
-                })),
+                .map(
+                  ({
+                    title,
+                    slug,
+                    summary,
+                    category,
+                    status,
+                    last_verified,
+                  }) => ({
+                    title,
+                    slug,
+                    summary,
+                    category,
+                    status,
+                    last_verified,
+                    url: `/glossary/${slug}`,
+                  }),
+                ),
             };
           },
         },
         { signal: lifecycle.signal },
       ),
     ).catch(() => undefined);
-
     return () => lifecycle.abort();
   }, [terms]);
 
-  const visible =
-    category === '全部'
-      ? terms
-      : terms.filter((term) => term.category === category);
-
+  const visible = filterTerms(terms, search, category);
+  const suggestions = matchingScenarios(search);
   return (
     <div className="glossary-explorer">
       <div className="filter-row" aria-label="按分类筛选">
@@ -135,46 +139,58 @@ export function GlossaryExplorer({
           <button
             type="button"
             key={item}
-            onClick={() => setCategory(item)}
+            onClick={() => update(search, item)}
             aria-pressed={category === item}
           >
             {item}
           </button>
         ))}
       </div>
-      <Command
-        className="term-command"
-        shouldFilter
-        value={search}
-        onValueChange={setSearch}
-      >
-        <div className="command-search-wrap">
-          <Search size={20} aria-hidden="true" />
-          <CommandInput
-            value={search}
-            onValueChange={setSearch}
-            placeholder="输入术语、别名或你遇到的问题"
-            aria-label="搜索术语"
-          />
-          <span>{visible.length} 个词条</span>
+      <div className="command-search-wrap">
+        <Search size={20} aria-hidden="true" />
+        <input
+          className="glossary-input"
+          type="search"
+          value={search}
+          maxLength={80}
+          onChange={(event) => update(event.target.value, category)}
+          placeholder="搜索术语、别名或场景问题"
+          aria-label="搜索术语"
+        />
+        <button
+          type="button"
+          className="text-link"
+          onClick={() => update('', '全部')}
+        >
+          重置
+        </button>
+      </div>
+      <output className="search-count" aria-live="polite">
+        匹配 {visible.length} 条 · 共收录 {terms.length} 个概念
+      </output>
+      {suggestions.length > 0 && (
+        <div className="scenario-suggestions" aria-label="相关场景建议">
+          {suggestions.map((item) => (
+            <Link key={item.id} href={`/compare#${item.comparison}`}>
+              <b>{item.question}</b>
+              <span>{item.hint} 查看选择条件 →</span>
+            </Link>
+          ))}
         </div>
-        <CommandList className="term-results">
-          <CommandEmpty>
-            <div className="empty-state">
-              <b>还没有找到这个词</b>
-              <span>可以换个中文或英文叫法，也欢迎提交词条建议。</span>
-              <Link href="/contribute">建议新词条</Link>
-            </div>
-          </CommandEmpty>
+      )}
+      {visible.length === 0 ? (
+        <div className="empty-state">
+          <b>没有匹配的词条</b>
+          <span>可以换个中英文名称，或重置分类后再找。</span>
+          <button type="button" onClick={() => update('', '全部')}>
+            查看全部词条
+          </button>
+          <Link href="/contribute">建议新词条</Link>
+        </div>
+      ) : (
+        <div className="term-results">
           {visible.map((term) => (
-            <CommandItem
-              key={term.slug}
-              value={`${term.title} ${term.aliases.join(' ')} ${term.category} ${term.summary}`}
-              className="term-result-item"
-              onSelect={() => {
-                window.location.href = `/glossary/${term.slug}`;
-              }}
-            >
+            <article key={term.slug} className="term-result-item">
               <Link
                 href={`/glossary/${term.slug}`}
                 className="term-card-content"
@@ -189,16 +205,24 @@ export function GlossaryExplorer({
                 <div className="term-card-meta">
                   <span>{term.category}</span>
                   <span>{term.level}</span>
+                  <span className={`content-status status-${term.status}`}>
+                    {statusLabels[term.status]}
+                  </span>
                   <span>
-                    <CircleCheck size={13} /> 核验于 {term.last_verified}
+                    {term.status === 'verified' ? '核验于' : '最近核验记录'}{' '}
+                    {term.last_verified}
                   </span>
                 </div>
-                <ArrowRight className="term-arrow" size={19} />
+                <ArrowRight
+                  className="term-arrow"
+                  size={19}
+                  aria-hidden="true"
+                />
               </Link>
-            </CommandItem>
+            </article>
           ))}
-        </CommandList>
-      </Command>
+        </div>
+      )}
     </div>
   );
 }

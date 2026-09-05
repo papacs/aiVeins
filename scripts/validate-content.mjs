@@ -2,41 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parse as parseYaml } from 'yaml';
+import { termMetaSchema } from '../lib/term-schema.ts';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const termDirectory = path.join(root, 'content', 'terms');
-const requiredStrings = [
-  'title',
-  'slug',
-  'category',
-  'level',
-  'status',
-  'trend',
-  'last_verified',
-  'summary',
-  'analogy',
-];
-const requiredArrays = [
-  'aliases',
-  'solves',
-  'boundaries',
-  'use_when',
-  'avoid_when',
-  'pitfalls',
-  'related',
-  'prerequisites',
-  'sources',
-];
-const allowedCategories = new Set([
-  '基础模型',
-  '应用架构',
-  'Agent 工程',
-  '检索',
-  '评测与安全',
-]);
-const allowedStatuses = new Set(['verified', 'researching', 'outdated']);
-const allowedTrends = new Set(['基础概念', '当前热门', '快速演变', '存在争议']);
-
 function parseMarkdownFile(raw) {
   const normalized = raw.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
   if (!normalized.startsWith('---\n'))
@@ -55,42 +24,31 @@ export function loadAndValidateContent() {
     .readdirSync(termDirectory)
     .filter((file) => file.endsWith('.md'))
     .sort();
-  const terms = files.map((file) => {
-    const { data, content } = parseMarkdownFile(
-      fs.readFileSync(path.join(termDirectory, file), 'utf8'),
-    );
-    for (const field of requiredStrings) {
-      if (typeof data[field] !== 'string' || !data[field].trim())
-        errors.push(`${file}: ${field} 必须是非空字符串`);
-    }
-    for (const field of requiredArrays) {
-      if (!Array.isArray(data[field]))
-        errors.push(`${file}: ${field} 必须是数组`);
-    }
-    if (!/^[a-z0-9-]+$/.test(data.slug ?? ''))
-      errors.push(`${file}: slug 只能包含小写字母、数字和连字符`);
-    if (data.slug && file !== `${data.slug}.md`)
-      errors.push(`${file}: 文件名必须与 slug 一致`);
-    if (!allowedCategories.has(data.category))
-      errors.push(`${file}: category 不在允许范围内`);
-    if (!allowedStatuses.has(data.status))
-      errors.push(`${file}: status 不在允许范围内`);
-    if (!allowedTrends.has(data.trend))
-      errors.push(`${file}: trend 不在允许范围内`);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(data.last_verified ?? ''))
-      errors.push(`${file}: last_verified 必须为 YYYY-MM-DD`);
-    if ((data.summary?.length ?? 0) < 24)
-      errors.push(`${file}: summary 太短，至少 24 个字符`);
-    if ((data.analogy?.length ?? 0) < 24)
-      errors.push(`${file}: analogy 太短，至少 24 个字符`);
-    if (!content.includes('## '))
-      errors.push(`${file}: 正文至少需要一个二级标题`);
-    for (const source of data.sources ?? []) {
-      if (!source?.name || !(source?.url ?? '').startsWith('https://'))
-        errors.push(`${file}: 每个来源都需要名称和 HTTPS URL`);
-    }
-    return { file, ...data, body: content.trim() };
-  });
+  const terms = files
+    .map((file) => {
+      let data, content;
+      try {
+        ({ data, content } = parseMarkdownFile(
+          fs.readFileSync(path.join(termDirectory, file), 'utf8'),
+        ));
+      } catch (error) {
+        errors.push(file + ': ' + error.message);
+        return null;
+      }
+      const parsed = termMetaSchema.safeParse(data);
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues)
+          errors.push(file + ': ' + issue.path.join('.') + ' ' + issue.message);
+        return null;
+      }
+      data = parsed.data;
+      if (file !== data.slug + '.md')
+        errors.push(file + ': 文件名必须与 slug 一致');
+      if (!content.includes('## '))
+        errors.push(file + ': 正文至少需要一个二级标题');
+      return { file, ...data, body: content.trim() };
+    })
+    .filter(Boolean);
 
   const seen = new Set();
   for (const term of terms) {

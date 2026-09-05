@@ -21,7 +21,6 @@ export default function GlossaryPage() {
       related: _related,
       prerequisites: _prerequisites,
       analogy: _analogy,
-      status: _status,
       ...term
     }) => term,
   );
